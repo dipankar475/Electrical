@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional electrical compliance and safety audit platform based on BEE, IS, NBC, BIS, and PCB standards. Generate NC reports and CAPA tables easily.">
+    <title>VoltAudit | Professional Electrical Audit Platform</title>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- App Header -->
+    <header>
+        <div class="brand">
+            <i data-lucide="zap" class="brand-icon"></i>
+            <h1>VoltAudit</h1>
+        </div>
+        
+        <nav class="nav-menu">
+            <a class="nav-link active" data-tab="setup">
+                <i data-lucide="home" style="width: 16px; height: 16px; display: inline; vertical-align: middle; margin-right: 4px;"></i>
+                Setup & Dashboard
+            </a>
+            <a class="nav-link" data-tab="checklist">
+                <i data-lucide="clipboard-list" style="width: 16px; height: 16px; display: inline; vertical-align: middle; margin-right: 4px;"></i>
+                Checklist
+            </a>
+            <a class="nav-link" data-tab="report">
+                <i data-lucide="file-check-2" style="width: 16px; height: 16px; display: inline; vertical-align: middle; margin-right: 4px;"></i>
+                NC Report & CAPA
+            </a>
+        </nav>
+
+        <div class="header-controls">
+            <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
+                <i data-lucide="moon" id="theme-icon" style="width: 20px; height: 20px;"></i>
+            </button>
+            <button class="btn btn-primary" onclick="saveCurrentAuditDraft()">
+                <i data-lucide="save" style="width: 16px; height: 16px;"></i> Save Audit
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+
+        <!-- Tab 1: Setup & Dashboard -->
+        <section id="setup-section" class="tab-content">
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                
+                <!-- Welcome & Info Form -->
+                <div class="content-panel">
+                    <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="settings" style="color: var(--primary);"></i>
+                        Audit Scope & Metadata
+                    </h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Define the facility details, auditor credentials, and scope of this electrical audit before starting the checklist.
+                    </p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="facilityName">Facility / Plant Name</label>
+                            <input type="text" id="facilityName" placeholder="e.g. Bangalore Manufacturing Plant 3">
+                        </div>
+                        <div class="form-group">
+                            <label for="auditorName">Lead Auditor Name</label>
+                            <input type="text" id="auditorName" placeholder="e.g. Rahul Sharma, C.E.A.">
+                        </div>
+                        <div class="form-group">
+                            <label for="auditDate">Audit Date</label>
+                            <input type="date" id="auditDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="auditScope">Audit Scope</label>
+                            <select id="auditScope">
+                                <option value="Full Site Audit">Full Site Audit (Electrical Safety & Energy)</option>
+                                <option value="Substation & Safety">Substation & Safety Only</option>
+                                <option value="Energy Conservation">BEE Energy Conservation Focus</option>
+                                <option value="Environmental Compliance">PCB & Waste Audit Focus</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;" class="action-row-buttons">
+                        <button class="btn btn-secondary" onclick="exportAuditJson()">
+                            <i data-lucide="download" style="width: 16px; height: 16px;"></i> Export Audit (JSON)
+                        </button>
+                        <button class="btn btn-secondary" onclick="triggerImportJson()">
+                            <i data-lucide="upload" style="width: 16px; height: 16px;"></i> Import Audit (JSON)
+                        </button>
+                        <input type="file" id="import-file-input" style="display: none;" accept=".json" onchange="importAuditJson(event)">
+                        
+                        <button class="btn btn-danger" style="margin-left: auto;" onclick="createNewAudit()">
+                            <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i> Reset Template
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dashboard Counters -->
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i data-lucide="percent"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Compliance Index</h3>
+                            <p id="metric-compliance-rate">100%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon red">
+                            <i data-lucide="alert-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total NCs Logged</h3>
+                            <p id="metric-total-ncs">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i data-lucide="shield-alert"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Critical Risks</h3>
+                            <p id="metric-critical-ncs">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i data-lucide="check-square"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Items Checked</h3>
+                            <p id="metric-completed">0/19</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Standards Scorecards -->
+                <div>
+                    <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--text-muted); font-weight: 500;">Framework Completion</h3>
+                    <div class="standards-grid">
+                        <div class="standard-card" onclick="switchTab('checklist')">
+                            <div class="standard-logo">IS</div>
+                            <h4>Indian Standards</h4>
+                            <span>Safety & Earthing</span>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="progress-fill-is"></div>
+                            </div>
+                            <span id="progress-text-is" style="margin-top: 4px; font-weight: 600;">100% Compliance</span>
+                        </div>
+
+                        <div class="standard-card" onclick="switchTab('checklist')">
+                            <div class="standard-logo">BEE</div>
+                            <h4>BEE Regulations</h4>
+                            <span>Energy & Efficiency</span>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="progress-fill-bee"></div>
+                            </div>
+                            <span id="progress-text-bee" style="margin-top: 4px; font-weight: 600;">100% Compliance</span>
+                        </div>
+
+                        <div class="standard-card" onclick="switchTab('checklist')">
+                            <div class="standard-logo">NBC</div>
+                            <h4>NBC Standards</h4>
+                            <span>Buildings & Fire Safety</span>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="progress-fill-nbc"></div>
+                            </div>
+                            <span id="progress-text-nbc" style="margin-top: 4px; font-weight: 600;">100% Compliance</span>
+                        </div>
+
+                        <div class="standard-card" onclick="switchTab('checklist')">
+                            <div class="standard-logo">BIS</div>
+                            <h4>BIS Certification</h4>
+                            <span>Equipment Quality</span>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="progress-fill-bis"></div>
+                            </div>
+                            <span id="progress-text-bis" style="margin-top: 4px; font-weight: 600;">100% Compliance</span>
+                        </div>
+
+                        <div class="standard-card" onclick="switchTab('checklist')">
+                            <div class="standard-logo">PCB</div>
+                            <h4>PCB Directives</h4>
+                            <span>Environment & Waste</span>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="progress-fill-pcb"></div>
+                            </div>
+                            <span id="progress-text-pcb" style="margin-top: 4px; font-weight: 600;">100% Compliance</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saved Audits Database List -->
+                <div class="content-panel saved-audits-section">
+                    <h3 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="database" style="color: var(--primary);"></i>
+                        Saved Audits Database
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                        Manage locally saved audit reports from this browser session. Clear draft and load details easily.
+                    </p>
+                    <div class="saved-audits-list" id="saved-audits-list">
+                        <!-- Loaded via JS -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Tab 2: Compliance Checklist -->
+        <section id="checklist-section" class="tab-content" style="display: none;">
+            <div class="main-section">
+                <!-- Sidebar Category Switcher -->
+                <div class="sidebar-panel" id="category-sidebar">
+                    <!-- Loaded dynamically via app.js -->
+                </div>
+
+                <!-- Active Checklist Panel -->
+                <div class="content-panel">
+                    <h2 style="font-size: 1.5rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                        <span>Compliance Checklist</span>
+                        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">Review compliance status of items</span>
+                    </h2>
+                    
+                    <div class="checklist-container" id="checklist-container">
+                        <!-- Loaded dynamically via app.js -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: NC Report & CAPA -->
+        <section id="report-section" class="tab-content" style="display: none;">
+            <div class="content-panel" id="printable-report-area">
+                
+                <!-- Report Sheet Header (For export styling) -->
+                <div class="report-header-sheet">
+                    <div class="report-title-row">
+                        <div>
+                            <h2 style="font-size: 2rem; font-weight: 700; color: var(--primary);">NON-COMPLIANCE & CAPA REPORT</h2>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">Electrical Systems Audit Audit Findings & Actions Summary</p>
+                        </div>
+                        <div style="text-align: right;" class="action-row-buttons">
+                            <button class="btn btn-primary" onclick="exportReportPdf()">
+                                <i data-lucide="printer" style="width: 16px; height: 16px;"></i> Print / Export PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="report-metadata-grid">
+                        <div class="report-meta-item">
+                            <span>Facility / Plant:</span> <span id="rep-facility-name" style="color: var(--text-main); font-weight: 500;">-</span>
+                        </div>
+                        <div class="report-meta-item">
+                            <span>Lead Auditor:</span> <span id="rep-auditor-name" style="color: var(--text-main); font-weight: 500;">-</span>
+                        </div>
+                        <div class="report-meta-item">
+                            <span>Audit Date:</span> <span id="rep-audit-date" style="color: var(--text-main); font-weight: 500;">-</span>
+                        </div>
+                        <div class="report-meta-item">
+                            <span>Audit Scope:</span> <span id="rep-scope" style="color: var(--text-main); font-weight: 500;">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Metrics Summary -->
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem;">
+                    <div class="stat-card" style="padding: 1rem 1.5rem;">
+                        <div class="stat-icon green" style="width: 2.2rem; height: 2.2rem; font-size: 1.1rem;">
+                            <i data-lucide="percent"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 style="font-size: 0.75rem;">Audit Compliance Index</h3>
+                            <p id="rep-stat-rate" style="font-size: 1.3rem;">100%</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="padding: 1rem 1.5rem;">
+                        <div class="stat-icon red" style="width: 2.2rem; height: 2.2rem; font-size: 1.1rem;">
+                            <i data-lucide="alert-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 style="font-size: 0.75rem;">Non-Compliance Counts</h3>
+                            <p id="rep-stat-total" style="font-size: 1.3rem;">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Charts Section -->
+                <div class="charts-wrapper">
+                    <div class="chart-card">
+                        <h5>Compliance Summary</h5>
+                        <div class="chart-container-inner">
+                            <canvas id="chart-compliance-rate"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h5>Severity Distribution</h5>
+                        <div class="chart-container-inner">
+                            <canvas id="chart-risk-breakdown"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NC / CAPA Action Log table -->
+                <div>
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="list-collapse" style="color: var(--danger);"></i>
+                        Non-Conformance & CAPA Log Sheet
+                    </h3>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">Reference / Clause</th>
+                                    <th style="width: 30%;">Requirement & Observations</th>
+                                    <th style="width: 12%;">Severity</th>
+                                    <th style="width: 25%;">Corrective & Preventive Action (CAPA)</th>
+                                    <th style="width: 10%;">Owner</th>
+                                    <th style="width: 8%;">Target Closure</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-nc-table-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer style="margin-top: auto; padding: 1.5rem 2rem; border-top: 1px solid var(--border); background-color: var(--bg-card); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted);">
+        <div>
+            VoltAudit Compliance Platform
+        </div>
+        <div>
+            Supports Indian Standards (IS), Bureau of Energy Efficiency (BEE), National Building Code (NBC), Bureau of Indian Standards (BIS), and Pollution Control Board (PCB).
+        </div>
+    </footer>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- ChartJS library for clean chart creation -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Vector Icons Library -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- App Logic -->
+    <script src="app.js"></script>
+
+</body>
+</html>
