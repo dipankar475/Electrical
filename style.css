@@ -1495,3 +1495,37 @@
     gap: 16px;
     animation: scaleCheck 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
+
+  .login-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .login-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .login-tab-btn:hover {
+    color: var(--text-dim);
+  }
+
+  .login-tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }

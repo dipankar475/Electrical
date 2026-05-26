@@ -8,6 +8,9 @@ let loggedInUser = sessionStorage.getItem('electro-user-email') || null;
 let userRole = sessionStorage.getItem('electro-user-role') || null;
 let isFeatureUnlocked = false;
 
+let currentRegistrationOtp = null;
+let currentRegistrationEmail = null;
+
 const approvedEmails = JSON.parse(localStorage.getItem('electro-approved-emails') || '[]');
 if (userRole === 'admin') {
   isFeatureUnlocked = true;
@@ -2887,8 +2890,11 @@ window.clearAllTransactions = clearAllTransactions;
 window.completePaymentFlow = completePaymentFlow;
 window.closePaymentModal = closePaymentModal;
 window.updateLockIcons = updateLockIcons;
-window.sendLoginVerificationCode = sendLoginVerificationCode;
-window.verifyLoginCode = verifyLoginCode;
+window.switchLoginTab = switchLoginTab;
+window.sendRegistrationVerificationCode = sendRegistrationVerificationCode;
+window.verifyRegistrationCode = verifyRegistrationCode;
+window.registerUser = registerUser;
+window.loginUser = loginUser;
 window.logoutUser = logoutUser;
 window.checkUserSession = checkUserSession;
 
@@ -2901,6 +2907,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAuditData();
   switchAuditMode(activeAuditMode, true);
   renderSavedAuditsList();
+  
+  // Initialize default user credentials
+  initDefaultUsers();
   
   // Verify user authentication session
   checkUserSession();
@@ -3241,15 +3250,66 @@ function checkUserSession() {
     const adminSidebarSection = document.getElementById('sidebar-admin-section');
     if (adminSidebarSection) adminSidebarSection.style.display = 'none';
     
-    document.getElementById('login-email-section').style.display = 'flex';
-    document.getElementById('login-otp-section').style.display = 'none';
+    switchLoginTab('login');
     document.getElementById('login-email-input').value = '';
-    document.getElementById('login-otp-input').value = '';
+    document.getElementById('login-password-input').value = '';
   }
 }
 
-function sendLoginVerificationCode() {
-  const email = document.getElementById('login-email-input').value.trim();
+function initDefaultUsers() {
+  const users = localStorage.getItem('electro-users');
+  if (!users) {
+    const defaultUsers = [
+      { email: 'admin@perfecttesthouse.com', password: 'admin123', role: 'admin', name: 'Admin Principal' },
+      { email: 'auditor@perfecttesthouse.com', password: 'auditor123', role: 'standard', name: 'Lead Auditor' }
+    ];
+    localStorage.setItem('electro-users', JSON.stringify(defaultUsers));
+  }
+}
+
+function switchLoginTab(tab) {
+  const btnLogin = document.getElementById('btn-tab-login');
+  const btnSignup = document.getElementById('btn-tab-signup');
+  const formLogin = document.getElementById('login-form-container');
+  const formSignup = document.getElementById('signup-form-container');
+  
+  if (tab === 'login') {
+    if (btnLogin) btnLogin.classList.add('active');
+    if (btnSignup) btnSignup.classList.remove('active');
+    if (formLogin) formLogin.style.display = 'flex';
+    if (formSignup) formSignup.style.display = 'none';
+  } else {
+    if (btnSignup) btnSignup.classList.add('active');
+    if (btnLogin) btnLogin.classList.remove('active');
+    if (formSignup) formSignup.style.display = 'flex';
+    if (formLogin) formLogin.style.display = 'none';
+    
+    // Reset signup steps
+    const verificationStep = document.getElementById('signup-verification-step');
+    const otpGroup = document.getElementById('signup-otp-group');
+    const profileStep = document.getElementById('signup-profile-step');
+    
+    if (verificationStep) verificationStep.style.display = 'flex';
+    if (otpGroup) otpGroup.style.display = 'none';
+    if (profileStep) profileStep.style.display = 'none';
+    
+    const signupEmailInput = document.getElementById('signup-email-input');
+    const signupOtpInput = document.getElementById('signup-otp-input');
+    const signupNameInput = document.getElementById('signup-name-input');
+    const signupPasswordInput = document.getElementById('signup-password-input');
+    const signupConfirmPasswordInput = document.getElementById('signup-confirm-password-input');
+    
+    if (signupEmailInput) signupEmailInput.value = '';
+    if (signupOtpInput) signupOtpInput.value = '';
+    if (signupNameInput) signupNameInput.value = '';
+    if (signupPasswordInput) signupPasswordInput.value = '';
+    if (signupConfirmPasswordInput) signupConfirmPasswordInput.value = '';
+  }
+}
+
+function sendRegistrationVerificationCode() {
+  const emailInput = document.getElementById('signup-email-input');
+  const email = emailInput ? emailInput.value.trim() : '';
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   
   if (!emailRegex.test(email)) {
@@ -3257,24 +3317,112 @@ function sendLoginVerificationCode() {
     return;
   }
   
-  const isAdmin = email.toLowerCase().includes('admin');
-  const code = isAdmin ? '998877' : '556677';
-  const role = isAdmin ? 'Admin' : 'Auditor';
+  const users = JSON.parse(localStorage.getItem('electro-users') || '[]');
+  if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+    showToast('This email is already registered. Please log in.', 'warning');
+    return;
+  }
+  
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  currentRegistrationOtp = otp;
+  currentRegistrationEmail = email;
   
   showToast(`Verification code sent to ${email}.`, 'success');
   
-  // Show OTP field
-  document.getElementById('login-otp-section').style.display = 'flex';
+  const otpGroup = document.getElementById('signup-otp-group');
+  if (otpGroup) otpGroup.style.display = 'flex';
   
-  // Trigger alert representing the simulated SMS/email sender
   setTimeout(() => {
-    alert(`[Email Verification System]\nTo: ${email}\n\nYour verification code is ${code} (Role: ${role})`);
+    alert(`[Email Verification System]\nTo: ${email}\n\nYour registration verification code is ${otp}`);
   }, 300);
 }
 
-function verifyLoginCode() {
-  const email = document.getElementById('login-email-input').value.trim();
-  const code = document.getElementById('login-otp-input').value.trim();
+function verifyRegistrationCode() {
+  const otpInput = document.getElementById('signup-otp-input');
+  const enteredOtp = otpInput ? otpInput.value.trim() : '';
+  
+  if (!enteredOtp) {
+    showToast('Please enter the verification code.', 'warning');
+    return;
+  }
+  
+  if (enteredOtp !== currentRegistrationOtp) {
+    showToast('Invalid verification code. Please try again.', 'danger');
+    return;
+  }
+  
+  showToast('Email verified successfully!', 'success');
+  
+  const verificationStep = document.getElementById('signup-verification-step');
+  const profileStep = document.getElementById('signup-profile-step');
+  
+  if (verificationStep) verificationStep.style.display = 'none';
+  if (profileStep) {
+    profileStep.style.display = 'flex';
+    const verifiedEmailInput = document.getElementById('signup-verified-email');
+    if (verifiedEmailInput) verifiedEmailInput.value = currentRegistrationEmail;
+  }
+}
+
+function registerUser() {
+  const nameInput = document.getElementById('signup-name-input');
+  const passwordInput = document.getElementById('signup-password-input');
+  const confirmPasswordInput = document.getElementById('signup-confirm-password-input');
+  
+  const name = nameInput ? nameInput.value.trim() : '';
+  const password = passwordInput ? passwordInput.value : '';
+  const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value : '';
+  
+  if (!name) {
+    showToast('Please enter your full name.', 'warning');
+    return;
+  }
+  
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters long.', 'warning');
+    return;
+  }
+  
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match.', 'danger');
+    return;
+  }
+  
+  const users = JSON.parse(localStorage.getItem('electro-users') || '[]');
+  if (users.some(u => u.email.toLowerCase() === currentRegistrationEmail.toLowerCase())) {
+    showToast('This email is already registered.', 'danger');
+    return;
+  }
+  
+  const isAdmin = currentRegistrationEmail.toLowerCase().includes('admin');
+  const role = isAdmin ? 'admin' : 'standard';
+  
+  const newUser = {
+    email: currentRegistrationEmail,
+    password: password,
+    role: role,
+    name: name
+  };
+  
+  users.push(newUser);
+  localStorage.setItem('electro-users', JSON.stringify(users));
+  
+  showToast('Account registered successfully! You can now log in.', 'success');
+  switchLoginTab('login');
+  
+  const loginEmailInput = document.getElementById('login-email-input');
+  if (loginEmailInput) loginEmailInput.value = currentRegistrationEmail;
+  
+  currentRegistrationOtp = null;
+  currentRegistrationEmail = null;
+}
+
+function loginUser() {
+  const emailInput = document.getElementById('login-email-input');
+  const passwordInput = document.getElementById('login-password-input');
+  
+  const email = emailInput ? emailInput.value.trim() : '';
+  const password = passwordInput ? passwordInput.value : '';
   
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
@@ -3282,16 +3430,21 @@ function verifyLoginCode() {
     return;
   }
   
-  const isAdmin = email.toLowerCase().includes('admin');
-  const expectedCode = isAdmin ? '998877' : '556677';
-  
-  if (code !== expectedCode) {
-    showToast('Invalid verification code. Access denied.', 'danger');
+  if (!password) {
+    showToast('Please enter your password.', 'warning');
     return;
   }
   
-  loggedInUser = email;
-  userRole = isAdmin ? 'admin' : 'standard';
+  const users = JSON.parse(localStorage.getItem('electro-users') || '[]');
+  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  
+  if (!user || user.password !== password) {
+    showToast('Invalid email or password.', 'danger');
+    return;
+  }
+  
+  loggedInUser = user.email;
+  userRole = user.role;
   
   sessionStorage.setItem('electro-user-email', loggedInUser);
   sessionStorage.setItem('electro-user-role', userRole);
@@ -3303,7 +3456,7 @@ function verifyLoginCode() {
     isFeatureUnlocked = localStorage.getItem('electro-audit-paid') === 'true' || approvedEmails.includes(loggedInUser);
   }
   
-  showToast(`Logged in successfully as ${isAdmin ? 'Admin' : 'Auditor'}.`, 'success');
+  showToast(`Logged in successfully as ${userRole === 'admin' ? 'Admin' : 'Auditor'} (${user.name}).`, 'success');
   checkUserSession();
 }
 

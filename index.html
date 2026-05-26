@@ -1307,32 +1307,82 @@
 <!-- LOGIN OVERLAY -->
 <div id="login-overlay" class="login-overlay" style="display: none;">
   <div class="login-card">
+    <!-- Header -->
     <div style="text-align: center; margin-bottom: 8px;">
       <div style="font-size: 36px; margin-bottom: 4px;">⚡</div>
       <h2 style="font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 2px;">ElectroAudit Pro</h2>
       <p style="font-size: 9px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Compliance Audit Platform Access</p>
     </div>
-    
-    <div id="login-email-section" style="display: flex; flex-direction: column; gap: 14px;">
+
+    <!-- Tabs header -->
+    <div class="login-tabs">
+      <button class="login-tab-btn active" id="btn-tab-login" onclick="switchLoginTab('login')">Log In</button>
+      <button class="login-tab-btn" id="btn-tab-signup" onclick="switchLoginTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- LOGIN FORM CONTAINER -->
+    <div id="login-form-container" style="display: flex; flex-direction: column; gap: 14px;">
       <div>
-        <label class="modal-label">Auditor Email Address</label>
+        <label class="modal-label">Email Address</label>
         <input type="email" id="login-email-input" placeholder="e.g. auditor@perfecttesthouse.com" class="modal-input">
       </div>
-      <button class="btn btn-primary" id="btn-send-otp" onclick="sendLoginVerificationCode()" style="width: 100%; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white;">Send Verification Code</button>
-    </div>
-    
-    <div id="login-otp-section" style="display: none; flex-direction: column; gap: 14px; border-top: 1px solid var(--border); padding-top: 14px;">
       <div>
-        <label class="modal-label">Verification Code (OTP)</label>
-        <input type="text" id="login-otp-input" placeholder="••••••" maxlength="6" class="modal-input" style="text-align: center; font-family: 'IBM Plex Mono', monospace; letter-spacing: 4px; font-size: 16px;">
+        <label class="modal-label">Password</label>
+        <input type="password" id="login-password-input" placeholder="••••••••" class="modal-input">
       </div>
-      <button class="btn btn-green" id="btn-verify-login" onclick="verifyLoginCode()" style="width: 100%; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;">Verify &amp; Login</button>
+      <button class="btn btn-primary" onclick="loginUser()" style="width: 100%; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white;">Log In</button>
     </div>
-    
+
+    <!-- SIGN UP FORM CONTAINER -->
+    <div id="signup-form-container" style="display: none; flex-direction: column; gap: 14px;">
+      <!-- Step 1: Email Verification -->
+      <div id="signup-verification-step" style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label class="modal-label">Email Address</label>
+          <input type="email" id="signup-email-input" placeholder="e.g. yourname@example.com" class="modal-input">
+        </div>
+        <button class="btn btn-primary" id="btn-send-signup-otp" onclick="sendRegistrationVerificationCode()" style="width: 100%; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white;">Send Verification Code</button>
+        
+        <!-- Hidden OTP Verification input -->
+        <div id="signup-otp-group" style="display: none; flex-direction: column; gap: 14px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <div>
+            <label class="modal-label">Verification Code (OTP)</label>
+            <input type="text" id="signup-otp-input" placeholder="••••••" maxlength="6" class="modal-input" style="text-align: center; font-family: 'IBM Plex Mono', monospace; letter-spacing: 4px; font-size: 16px;">
+          </div>
+          <button class="btn btn-green" onclick="verifyRegistrationCode()" style="width: 100%; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;">Verify Email Code</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Profile Details (visible after OTP is successfully verified) -->
+      <div id="signup-profile-step" style="display: none; flex-direction: column; gap: 14px;">
+        <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; padding: 8px 12px; font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 6px;">
+          <span>✓</span> Email address successfully verified.
+        </div>
+        <div>
+          <label class="modal-label">Verified Email</label>
+          <input type="email" id="signup-verified-email" class="modal-input" disabled style="opacity: 0.7; cursor: not-allowed; background: var(--surface2);">
+        </div>
+        <div>
+          <label class="modal-label">Full Name</label>
+          <input type="text" id="signup-name-input" placeholder="e.g. John Doe" class="modal-input">
+        </div>
+        <div>
+          <label class="modal-label">Password</label>
+          <input type="password" id="signup-password-input" placeholder="Minimum 6 characters" class="modal-input">
+        </div>
+        <div>
+          <label class="modal-label">Confirm Password</label>
+          <input type="password" id="signup-confirm-password-input" placeholder="Repeat your password" class="modal-input">
+        </div>
+        <button class="btn btn-green" onclick="registerUser()" style="width: 100%; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;">Create Account</button>
+      </div>
+    </div>
+
+    <!-- Default credentials info -->
     <div style="margin-top: 8px; padding: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; font-size: 10px; color: var(--text-dim); line-height: 1.5; text-align: center;">
       <strong>Default Credentials:</strong><br>
-      Admin Code: <code style="font-weight: bold; color: var(--accent);">998877</code> (email must contain 'admin')<br>
-      Standard Code: <code style="font-weight: bold; color: var(--green);">556677</code> (any other email)
+      Admin: <code style="font-weight: bold; color: var(--accent);">admin@perfecttesthouse.com</code> / <code style="font-weight: bold; color: var(--accent);">admin123</code><br>
+      Auditor: <code style="font-weight: bold; color: var(--green);">auditor@perfecttesthouse.com</code> / <code style="font-weight: bold; color: var(--green);">auditor123</code>
     </div>
   </div>
 </div>
